@@ -11,6 +11,29 @@ const getAllTransactions=async (req,res)=>{
     }
 }
 
+const  deleteTransactions=async(req,res)=>{
+    try{
+
+        const transactionId=req.body.transactionId;
+        await transactionModel.findOneAndDelete({_id:transactionId});
+        res.status(200).send("Transactions deleted");
+
+
+    }catch(err){
+console.log(err);
+res.status(500).json(err);
+    }
+}
+
+
+const updateTransactions=async (req,res)=>{
+    try{
+        await transactionModel.findByIdAndUpdate({_id:req.body.transactionId}, req.body.payload);
+        res.status(200).send("Updated transaction successfully");
+    }catch(err){
+        res.status(400).send(err);
+    }
+}
 
 const addTransactions=async (req,res)=>{
     try{
@@ -24,4 +47,4 @@ const addTransactions=async (req,res)=>{
     }
 }
 
-module.exports={getAllTransactions,addTransactions}
+module.exports={getAllTransactions,addTransactions,updateTransactions,deleteTransactions}

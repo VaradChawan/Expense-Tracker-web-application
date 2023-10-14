@@ -10,6 +10,9 @@ function App() {
         <Route
           path="/"
           element={
+
+            // protected routers are use to prevent unauthorized or unauthenticated users from accessing the pages/components
+            // eg -> if a user is not logged in and try to access the protected routes then the users must redirect to the login page.
             <ProtectedRoutes>
               <Home />
             </ProtectedRoutes>

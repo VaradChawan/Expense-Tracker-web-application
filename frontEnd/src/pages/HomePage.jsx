@@ -1,6 +1,6 @@
 import React,{useState,useEffect} from 'react'
 import Layout from '../components/Layouts/Layout'
-import {Form, Modal,Input, Select, message,Table} from 'antd';
+import {Form, Modal,Input, Select, message,Table, Space, Button} from 'antd';
 
 import axios from 'axios';
 
@@ -8,21 +8,14 @@ function HomePage() {
   
   const [showModal,setShowModal]=useState(false);
   const [allTransaction,setAllTransactions]=useState([]);
+  const [editAble,setEditAble]=useState(null);
 
   const columns=[
-    {
-      title: 'Date',
-      dataIndex: 'date'
-      
-    },
+    
     {
       title: 'Amount',
       dataIndex: 'amount'
       
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type'
     },
     
     {
@@ -36,7 +29,12 @@ function HomePage() {
     ,
     {
       title: 'Actions',
-      dataIndex: 'actions'
+      render: (text,record) => (
+        <Space>
+          <Button type="primary" onClick={()=>{ setEditAble(record); setShowModal(true) }}> Edit</Button>
+          <Button type="primary" danger onClick={()=> handleDeleteRecord(record)}> Delete</Button>
+        </Space>
+      )
     }
   ]
 
@@ -45,11 +43,11 @@ function HomePage() {
 const getAllTransactions1=async()=>{
   try{
     const userIdFetch=JSON.parse(localStorage.getItem('user'));
-console.log(typeof userIdFetch.user._id)
+//console.log(typeof userIdFetch.user._id)
 const userId=userIdFetch.user._id
     const res=await axios.post('http://127.0.0.1:4000/transactions/showTransaction',{userid:userId})
     setAllTransactions(res.data);
-    console.log(res.data);
+    console.log(res);
   }
   catch(err){
     console.log(err);
@@ -57,23 +55,50 @@ const userId=userIdFetch.user._id
   }
 }
 
-useEffect(()=>{
-  getAllTransactions1();
-},[]);
+const handleDeleteRecord=async(record)=>{
+  try{
+    console.log("hello")
+    await axios.post('http://127.0.0.1:4000/transactions/deleteTransaction',{transactionId:record._id})
+    message.error("Deleted successfully")
+    location.record();
+
+  }catch(err)
+  {
+    console.log(err);
+    message.error("Fail to delete the data")
+  }
+}
 
   const handleTransactionSubmit=async(values)=>{
     try{
       const userDet =JSON.parse(localStorage.getItem("user"));
       //const userid=userDet.user.name;
-      await axios.post('http://127.0.0.1:4000/transactions/addTransactions',{...values,userid:userDet.user._id})
-      message.success("transactions added successfully")
+
+      if(editAble){
+          await axios.post('http://127.0.0.1:4000/transactions/updateTransaction',
+          {payload:{...values,userId:userDet.user._id},transactionId:editAble._id });
+          message.success("Updated successfully");
+      setEditAble(null);
+      }else{
+        await axios.post('http://127.0.0.1:4000/transactions/addTransactions',{...values,userid:userDet.user._id})
+        message.success("transactions added successfully")
+      
+      }
+      
       setShowModal(false);
+      location.reload();
     }
     catch(err){
       console.log(err);
       message.error("failed to add transaction")
     }
   }
+
+  
+useEffect(() => {
+  getAllTransactions1();
+},[]);
+
   return (
    <Layout>
     <div className="filters">
@@ -87,14 +112,14 @@ useEffect(()=>{
     </div>
 
     <Modal 
-      title="Add Transaction"
+      title={editAble?"Edit Transaction":"Add Transaction"}
       open={showModal}
       onCancel={()=>setShowModal(false)}
       footer={false}
 
     >
       
-      <Form layout="vertical" onFinish={handleTransactionSubmit}>
+      <Form layout="vertical" onFinish={handleTransactionSubmit} initialValues={editAble}>
         <Form.Item label="Amount" name="amount" >
           <Input type="text" />
         </Form.Item>
